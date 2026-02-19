@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "dgSpecHash": "nZ5Dd+D3TRk=",
+  "success": true,
+  "projectFilePath": "/tank/home/kjellner/SourceRep/KjellnersPersistentMaps/KjellnersPersistentMaps.csproj",
+  "expectedPackageFiles": [
+    "/tank/home/kjellner/.nuget/packages/lib.harmony/2.2.2/lib.harmony.2.2.2.nupkg.sha512",
+    "/tank/home/kjellner/.nuget/packages/microsoft.netframework.referenceassemblies/1.0.3/microsoft.netframework.referenceassemblies.1.0.3.nupkg.sha512",
+    "/tank/home/kjellner/.nuget/packages/microsoft.netframework.referenceassemblies.net472/1.0.3/microsoft.netframework.referenceassemblies.net472.1.0.3.nupkg.sha512"
+  ],
+  "logs": []
+}

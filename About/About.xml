@@ -1,0 +1,11 @@
+<ModMetaData>
+    <name>Kjellner's Persistent Maps</name>
+    <author>E. Kjellner</author>
+    <packageId>kjellner.persistentmaps</packageId>
+    
+    <description>Implements serialization of Maps so you can visit a location, leave and it saves the map to disk and then makes it possible to revisit later.</description>
+    
+    <supportedVersions>
+        <li>1.6</li>
+    </supportedVersions>
+</ModMetaData>

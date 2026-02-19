@@ -1,0 +1,63 @@
+{
+  "format": 1,
+  "restore": {
+    "/tank/home/kjellner/SourceRep/KjellnersPersistentMaps/KjellnersPersistentMaps.csproj": {}
+  },
+  "projects": {
+    "/tank/home/kjellner/SourceRep/KjellnersPersistentMaps/KjellnersPersistentMaps.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/tank/home/kjellner/SourceRep/KjellnersPersistentMaps/KjellnersPersistentMaps.csproj",
+        "projectName": "KjellnersPersistentMaps",
+        "projectPath": "/tank/home/kjellner/SourceRep/KjellnersPersistentMaps/KjellnersPersistentMaps.csproj",
+        "packagesPath": "/tank/home/kjellner/.nuget/packages/",
+        "outputPath": "/tank/home/kjellner/SourceRep/KjellnersPersistentMaps/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/tank/home/kjellner/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net472"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net472": {
+            "targetAlias": "net472",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "10.0.100"
+      },
+      "frameworks": {
+        "net472": {
+          "targetAlias": "net472",
+          "dependencies": {
+            "Lib.Harmony": {
+              "target": "Package",
+              "version": "[2.2.2, )"
+            },
+            "Microsoft.NETFramework.ReferenceAssemblies": {
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[1.0.3, )",
+              "autoReferenced": true
+            }
+          },
+          "runtimeIdentifierGraphPath": "/usr/share/dotnet/sdk/10.0.103/RuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}
