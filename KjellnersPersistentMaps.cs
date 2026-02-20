@@ -7,6 +7,7 @@ using System.IO;
 using System.Text;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 
 namespace KjellnersPersistentMaps
 {
@@ -106,42 +107,6 @@ namespace KjellnersPersistentMaps
         }
     }
 
-    // Block ancient danger generation for reloaded maps.
-    [HarmonyPatch(
-        typeof(GetOrGenerateMapUtility),
-        nameof(GetOrGenerateMapUtility.GetOrGenerateMap),
-        new Type[]
-        {
-            typeof(PlanetTile),
-            typeof(IntVec3),
-            typeof(WorldObjectDef),
-            typeof(IEnumerable<GenStepWithParams>),
-            typeof(bool)
-        }
-    )]
-    public static class Patch_GetOrGenerateMap_Prefix
-    {
-        public static void Prefix(
-            PlanetTile tile,
-            ref IEnumerable<GenStepWithParams> extraGenStepDefs)
-        {
-            if (!PersistentMapSerializer.PersistentFileExists(tile))
-                return;
-
-            if (extraGenStepDefs == null)
-                return;
-
-            extraGenStepDefs = extraGenStepDefs
-                .Where(gs =>
-                    !(gs.genStep is GenStep_ScatterRuinsSimple) &&
-                    !(gs.genStep is GenStep_AncientShrines))
-                .ToList();
-
-            Log.Message($"[PersistentMaps] Filtered ruin gensteps for tile {tile}");
-        }
-    }
-
-
     // Inject map loading logic
     [HarmonyPatch(
         typeof(GetOrGenerateMapUtility),
@@ -178,10 +143,24 @@ namespace KjellnersPersistentMaps
         }
     }
 
+    [HarmonyPatch(typeof(RoofCollapseCellsFinder), "CheckAndRemoveCollpsingRoofs")]
+    public static class Patch_DisableRoofCollapseDuringLoad
+    {
+        public static bool Prefix()
+        {
+            if (PersistentMapSerializer.IsRestoring)
+                return false; // Skip collapse check
+
+            return true;
+        }
+    }
+
 
     // Persistent Map Serializer
     public static class PersistentMapSerializer
     {
+        public static bool IsRestoring = false;
+
         public static void SaveMap(Map map, PlanetTile tile)
         {
             string folder = GetPersistentFolder();
@@ -207,10 +186,11 @@ namespace KjellnersPersistentMaps
                 );
 
                 // Roof
-                data.roofData = MapSerializeUtility.SerializeByte(
+                data.roofData = MapSerializeUtility.SerializeUshort(
                     map,
-                    c => map.roofGrid.Roofed(c) ? (byte)1 : (byte)0
+                    c => (ushort)(map.roofGrid.RoofAt(c)?.shortHash ?? 0)
                 );
+
 
                 // Snow
                 data.snowData = MapSerializeUtility.SerializeByte(
@@ -227,21 +207,32 @@ namespace KjellnersPersistentMaps
                     );
                 }
 
-                // -----------------------------
-                // Save Compressible Buildings (SAFE)
-                // -----------------------------
+                // Items
+                // We filter what we save to aviod crossref issues
+                data.items = new List<PersistentItemData>();
+
+                foreach (Thing t in map.listerThings.AllThings)
+                {
+                    if (!PersistentItemData.IsSafePersistentItem(t))
+                        continue;
+
+                    data.items.Add(new PersistentItemData
+                    {
+                        defName = t.def.defName,
+                        stuffDefName = t.Stuff?.defName,
+                        position = t.Position,
+                        stackCount = t.stackCount,
+                        hitPoints = t.HitPoints
+                    });
+                }
+
+                // Buildings
                 data.buildings = new List<PersistentBuildingData>();
 
                 // Make sure to mirror this logic in load otherwise bad things happen mate
                 foreach (Thing t in map.listerThings.AllThings)
                 {
-                    if (t.def.category != ThingCategory.Building)
-                        continue;
-
-                    if (t.def.IsBlueprint || t.def.IsFrame)
-                        continue;
-                    
-                    if (!t.def.destroyable)
+                    if (!PersistentBuildingData.IsSafePersistentBuilding(t))
                         continue;
 
                     data.buildings.Add(new PersistentBuildingData
@@ -309,6 +300,9 @@ namespace KjellnersPersistentMaps
                     Log.Error("[PersistentMaps] Loaded data is null.");
                     return;
                 }
+                
+                // Roofs stuff
+                IsRestoring = true;
 
                 // -----------------------------
                 // Apply Terrain
@@ -326,63 +320,19 @@ namespace KjellnersPersistentMaps
                         });
                 }
 
-                // -----------------------------
-                // Apply Roof
-                // -----------------------------
-                if (data.roofData != null)
-                {
-                    MapSerializeUtility.LoadByte(
-                        data.roofData,
-                        map,
-                        (c, val) =>
-                        {
-                            if (val == 1)
-                                map.roofGrid.SetRoof(c, RoofDefOf.RoofConstructed);
-                            else
-                                map.roofGrid.SetRoof(c, null);
-                        });
-                }
-
-                // -----------------------------
-                // Apply Snow
-                // -----------------------------
-                if (data.snowData != null)
-                {
-                    MapSerializeUtility.LoadByte(
-                        data.snowData,
-                        map,
-                        (c, val) =>
-                        {
-                            map.snowGrid.SetDepth(c, val);
-                        });
-                }
-
-                // -----------------------------
-                // Apply Pollution (Biotech)
-                // -----------------------------
-                if (ModsConfig.BiotechActive && map.pollutionGrid != null && data.pollutionData != null)
-                {
-                    MapSerializeUtility.LoadByte(
-                        data.pollutionData,
-                        map,
-                        (c, val) =>
-                        {
-                            map.pollutionGrid.SetPolluted(c, val == 1, silent: true);
-                        });
-                }
-
+                // Buildings, need to go before to avoid roof collapse (maybe)
                 if (data.buildings != null)
                 {
-                    // Make sure to mirror this logic in save otherwise bad things happen mate
+                    // wipe mapgen stuff that we load
                     foreach (Thing thing in map.listerThings.AllThings.ToList())
                     {
-                        if (!thing.def.destroyable)
+                        if (!PersistentBuildingData.IsSafePersistentBuilding(thing))
                             continue;
-                        
-                        if (thing.def.category == ThingCategory.Building)
-                            thing.Destroy(DestroyMode.Vanish);
+
+                        thing.Destroy(DestroyMode.Vanish);
                     }
 
+                    // load
                     foreach (PersistentBuildingData b in data.buildings)
                     {
                         ThingDef def = DefDatabase<ThingDef>.GetNamedSilentFail(b.defName);
@@ -412,9 +362,134 @@ namespace KjellnersPersistentMaps
                             }
                         }
 
-                        GenSpawn.Spawn(thing, b.position, map);
+                        GenSpawn.Spawn(
+                                thing,
+                                b.position,
+                                map,
+                                thing.Rotation,
+                                WipeMode.Vanish,
+                                respawningAfterLoad: true
+                            );
+
                     }
                 }
+
+                // Items
+                // Wipe mapgen
+                foreach (Thing t in map.listerThings.AllThings.ToList())
+                {
+                    if (!PersistentItemData.IsSafePersistentItem(t))
+                            continue;
+
+                    t.Destroy(DestroyMode.Vanish);
+                }
+
+                // Rebuild
+                if (data.items != null)
+                {
+                    foreach (var i in data.items)
+                    {
+                        ThingDef def = DefDatabase<ThingDef>.GetNamedSilentFail(i.defName);
+                        if (def == null)
+                            continue;
+
+                        ThingDef stuff = null;
+                        if (!string.IsNullOrEmpty(i.stuffDefName))
+                            stuff = DefDatabase<ThingDef>.GetNamedSilentFail(i.stuffDefName);
+
+                        Thing thing = ThingMaker.MakeThing(def, stuff);
+
+                        thing.stackCount = i.stackCount;
+                        thing.HitPoints = Math.Max(1, Math.Min(i.hitPoints, thing.MaxHitPoints));
+
+                        GenSpawn.Spawn(thing, i.position, map, Rot4.North, WipeMode.Vanish, respawningAfterLoad: true);
+                    }
+                }
+
+                // Plants
+                // Wipe mapgen
+                foreach (Thing t in map.listerThings.AllThings.ToList())
+                {
+                    if (t.def.category == ThingCategory.Plant)
+                    {
+                        t.Destroy(DestroyMode.Vanish);
+                    }
+                }
+
+                // Rebuild
+                if (data.plants != null)
+                {
+                    foreach (var p in data.plants)
+                    {
+                        ThingDef def = DefDatabase<ThingDef>.GetNamedSilentFail(p.defName);
+                        if (def == null)
+                            continue;
+
+                        Plant plant = ThingMaker.MakeThing(def) as Plant;
+                        if (plant == null)
+                            continue;
+
+                        plant.Growth = p.growth;
+                        plant.HitPoints = Math.Max(1, Math.Min(p.hitPoints, plant.MaxHitPoints));
+
+                        GenSpawn.Spawn(plant, p.position, map, Rot4.North, WipeMode.Vanish, respawningAfterLoad: true);
+                    }
+                }
+
+                // -----------------------------
+                // Apply Roof
+                // -----------------------------
+                LongEventHandler.ExecuteWhenFinished(() =>
+                {
+                    ApplyRoofs(map, data);
+                });
+
+
+                // -----------------------------
+                // Apply Snow
+                // -----------------------------
+                if (data.snowData != null)
+                {
+                    MapSerializeUtility.LoadByte(
+                        data.snowData,
+                        map,
+                        (c, val) =>
+                        {
+                            map.snowGrid.SetDepth(c, val);
+                        });
+                }
+
+                // -----------------------------
+                // Apply Pollution (Biotech)
+                // -----------------------------
+                if (ModsConfig.BiotechActive && map.pollutionGrid != null && data.pollutionData != null)
+                {
+                    MapSerializeUtility.LoadByte(
+                        data.pollutionData,
+                        map,
+                        (c, val) =>
+                        {
+                            map.pollutionGrid.SetPolluted(c, val == 1, silent: true);
+                        });
+                }
+
+
+                // Clean out any pawns generated by mapgen, could maybe be blocked instead
+                foreach (Pawn pawn in map.mapPawns.AllPawns.ToList())
+                {
+                    if (pawn.Faction == null)
+                        continue;
+
+                    if (pawn.Faction == Faction.OfPlayer)
+                        continue;
+
+                    if (pawn.Faction.HostileTo(Faction.OfPlayer))
+                        pawn.Destroy();
+                }
+
+                // Restore any saved pawns
+                // TODO: Implement
+
 
                 Log.Message($"[PersistentMaps] Applied saved data for tile {tile}");
             }
@@ -423,6 +498,46 @@ namespace KjellnersPersistentMaps
                 Log.Error($"[PersistentMaps] Failed applying saved data: {e}");
                 Scribe.mode = LoadSaveMode.Inactive;
             }
+        }
+
+        private static void ApplyRoofs(Map map, PersistentMapData data)
+        {
+            if (data.roofData == null)
+                return;
+
+            MapSerializeUtility.LoadUshort(
+                data.roofData,
+                map,
+                (c, val) =>
+                {
+                    if (val == 0)
+                    {
+                        map.roofGrid.SetRoof(c, null);
+                        return;
+                    }
+
+                    RoofDef def = DefDatabase<RoofDef>.GetByShortHash(val);
+                    if (def != null)
+                        map.roofGrid.SetRoof(c, def);
+                });
+
+            // Critical: rebuild roof support
+            RebuildRoofSupport(map);
+        }
+
+        private static void RebuildRoofSupport(Map map)
+        {
+            var method = typeof(RoofGrid)
+                .GetMethod("ResolveAllRoofSupport",
+                    BindingFlags.Instance | BindingFlags.NonPublic);
+
+            if (method != null)
+            {
+                method.Invoke(map.roofGrid, null);
+            }
+
+            map.roofCollapseBuffer.Clear();
+            IsRestoring = false;
         }
 
 
