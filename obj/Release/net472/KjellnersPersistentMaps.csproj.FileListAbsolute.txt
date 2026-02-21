@@ -1,11 +1,10 @@
 /tank/home/kjellner/SourceRep/KjellnersPersistentMaps/obj/Release/net472/KjellnersPersistentMaps.csproj.AssemblyReference.cache
 /tank/home/kjellner/SourceRep/KjellnersPersistentMaps/obj/Release/net472/KjellnersPersistentMaps.GeneratedMSBuildEditorConfig.editorconfig
-/tank/home/kjellner/SourceRep/KjellnersPersistentMaps/obj/Release/net472/KjellnersPersistentMaps.AssemblyInfoInputs.cache
-/tank/home/kjellner/SourceRep/KjellnersPersistentMaps/obj/Release/net472/KjellnersPersistentMaps.AssemblyInfo.cs
 /tank/home/kjellner/SourceRep/KjellnersPersistentMaps/obj/Release/net472/KjellnersPersistentMaps.csproj.CoreCompileInputs.cache
 /tank/home/kjellner/SourceRep/KjellnersPersistentMaps/bin/Release/net472/KjellnersPersistentMaps.dll
 /tank/home/kjellner/SourceRep/KjellnersPersistentMaps/bin/Release/net472/KjellnersPersistentMaps.pdb
 /tank/home/kjellner/SourceRep/KjellnersPersistentMaps/bin/Release/net472/0Harmony.dll
-/tank/home/kjellner/SourceRep/KjellnersPersistentMaps/obj/Release/net472/Kjellner.726A242D.Up2Date
 /tank/home/kjellner/SourceRep/KjellnersPersistentMaps/obj/Release/net472/KjellnersPersistentMaps.dll
 /tank/home/kjellner/SourceRep/KjellnersPersistentMaps/obj/Release/net472/KjellnersPersistentMaps.pdb
+/tank/home/kjellner/SourceRep/KjellnersPersistentMaps/export/KjellnersPersistentMaps/1.6/Assemblies/KjellnersPersistentMaps.dll
+/tank/home/kjellner/SourceRep/KjellnersPersistentMaps/export/KjellnersPersistentMaps/1.6/Assemblies/KjellnersPersistentMaps.pdb

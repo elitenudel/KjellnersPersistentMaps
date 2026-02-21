@@ -20,7 +20,7 @@ namespace KjellnersPersistentMaps
         public GameComponent_PersistentMaps(Game game)
         {
             persistentId = Guid.NewGuid().ToString();
-            Log.Message($"[PersistentMaps] Generated persistent ID: {persistentId}");
+            KLog.Message($"[PersistentMaps] Generated persistent ID: {persistentId}");
         }
 
         public override void ExposeData()
@@ -38,7 +38,7 @@ namespace KjellnersPersistentMaps
             var harmony = new Harmony("kjellner.persistentmaps");
             harmony.PatchAll();
 
-            Log.Message("[PersistentMaps] All patches applied.");
+            KLog.Message("[PersistentMaps] All patches applied.");
         }
     }
 
@@ -59,7 +59,7 @@ namespace KjellnersPersistentMaps
 
             if (abandoned != null)
             {
-                Log.Message($"[PersistentMaps] Allowing settlement on abandoned tile {tile.tileId}");
+                KLog.Message($"[PersistentMaps] Allowing settlement on abandoned tile {tile.tileId}");
 
                 __result = true;
 
@@ -81,7 +81,7 @@ namespace KjellnersPersistentMaps
 
             if (abandoned != null)
             {
-                Log.Message("[PersistentMaps] Removing abandoned settlement before settling.");
+                KLog.Message("[PersistentMaps] Removing abandoned settlement before settling.");
                 Find.WorldObjects.Remove(abandoned);
             }
         }
@@ -101,7 +101,7 @@ namespace KjellnersPersistentMaps
             if (!map.IsPlayerHome)
                 return;
 
-            Log.Message($"[PersistentMaps] Serializing map before abandonment. Tile: {__instance.Tile.tileId}");
+            KLog.Message($"[PersistentMaps] Serializing map before abandonment. Tile: {__instance.Tile.tileId}");
 
             PersistentMapSerializer.SaveMap(map, __instance.Tile);
         }
@@ -132,7 +132,7 @@ namespace KjellnersPersistentMaps
             if (!PersistentMapSerializer.PersistentFileExists(tile))
                 return;
 
-            Log.Message($"[PersistentMaps] Applying persistent data to tile {tile}");
+            KLog.Message($"[PersistentMaps] Applying persistent data to tile {tile}");
 
             Map map = __result;
 
@@ -167,8 +167,6 @@ namespace KjellnersPersistentMaps
             return true;
         }
     }
-
-
 
     // Persistent Map Serializer
     public static class PersistentMapSerializer
@@ -304,11 +302,11 @@ namespace KjellnersPersistentMaps
 
                 Scribe.saver.FinalizeSaving();
 
-                Log.Message($"[PersistentMaps] Saved persistent map to {file}");
+                KLog.Message($"[PersistentMaps] Saved persistent map to {file}");
             }
             catch (Exception e)
             {
-                Log.Error($"[PersistentMaps] Failed saving map: {e}");
+                KLog.Error($"[PersistentMaps] Failed saving map: {e}");
             }
             finally
             {
@@ -343,7 +341,7 @@ namespace KjellnersPersistentMaps
 
                 if (data == null)
                 {
-                    Log.Error("[PersistentMaps] Loaded data is null.");
+                    KLog.Error("[PersistentMaps] Loaded data is null.");
                     return;
                 }
                 
@@ -555,11 +553,11 @@ namespace KjellnersPersistentMaps
                 }
 
 
-                Log.Message($"[PersistentMaps] Applied saved data for tile {tile}");
+                KLog.Message($"[PersistentMaps] Applied saved data for tile {tile}");
             }
             catch (Exception e)
             {
-                Log.Error($"[PersistentMaps] Failed applying saved data: {e}");
+                KLog.Error($"[PersistentMaps] Failed applying saved data: {e}");
                 Scribe.mode = LoadSaveMode.Inactive;
             }
         }
@@ -617,7 +615,7 @@ namespace KjellnersPersistentMaps
         {
             if (Current.Game == null)
             {
-                Log.Error("[PersistentMaps] Current.Game is null.");
+                KLog.Error("[PersistentMaps] Current.Game is null.");
                 return null;
             }
 
@@ -625,13 +623,13 @@ namespace KjellnersPersistentMaps
 
             if (comp == null)
             {
-                Log.Error("[PersistentMaps] GameComponent_PersistentMaps not found.");
+                KLog.Error("[PersistentMaps] GameComponent_PersistentMaps not found.");
                 return null;
             }
 
             if (string.IsNullOrEmpty(comp.persistentId))
             {
-                Log.Error("[PersistentMaps] persistentId is null or empty.");
+                KLog.Error("[PersistentMaps] persistentId is null or empty.");
                 return null;
             }
 
