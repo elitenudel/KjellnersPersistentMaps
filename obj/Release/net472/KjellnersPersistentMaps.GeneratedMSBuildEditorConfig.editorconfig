@@ -1,6 +1,6 @@
 is_global = true
 build_property.RootNamespace = KjellnersPersistentMaps
-build_property.ProjectDir = /tank/home/kjellner/SourceRep/KjellnersPersistentMaps/
+build_property.ProjectDir = /tank/home/kjellner/SourceRep/KjellnersPersistentMaps_ScribeUpdate/
 build_property.EnableComHosting = 
 build_property.EnableGeneratedComInterfaceComImportInterop = 
 build_property.CsWinRTUseWindowsUIXamlProjections = false

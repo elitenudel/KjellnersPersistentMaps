@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "/tank/home/kjellner/SourceRep/KjellnersPersistentMaps/KjellnersPersistentMaps.csproj": {}
+    "/tank/home/kjellner/SourceRep/KjellnersPersistentMaps_ScribeUpdate/KjellnersPersistentMaps.csproj": {}
   },
   "projects": {
-    "/tank/home/kjellner/SourceRep/KjellnersPersistentMaps/KjellnersPersistentMaps.csproj": {
+    "/tank/home/kjellner/SourceRep/KjellnersPersistentMaps_ScribeUpdate/KjellnersPersistentMaps.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/tank/home/kjellner/SourceRep/KjellnersPersistentMaps/KjellnersPersistentMaps.csproj",
+        "projectUniqueName": "/tank/home/kjellner/SourceRep/KjellnersPersistentMaps_ScribeUpdate/KjellnersPersistentMaps.csproj",
         "projectName": "KjellnersPersistentMaps",
-        "projectPath": "/tank/home/kjellner/SourceRep/KjellnersPersistentMaps/KjellnersPersistentMaps.csproj",
+        "projectPath": "/tank/home/kjellner/SourceRep/KjellnersPersistentMaps_ScribeUpdate/KjellnersPersistentMaps.csproj",
         "packagesPath": "/tank/home/kjellner/.nuget/packages/",
-        "outputPath": "/tank/home/kjellner/SourceRep/KjellnersPersistentMaps/obj/",
+        "outputPath": "/tank/home/kjellner/SourceRep/KjellnersPersistentMaps_ScribeUpdate/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "/tank/home/kjellner/.nuget/NuGet/NuGet.Config"

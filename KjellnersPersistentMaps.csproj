@@ -15,6 +15,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="DecompiledRimworld/**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Reference Include="Assembly-CSharp">
       <HintPath>/tank/home/kjellner/.steam/steam/steamapps/common/RimWorld/RimWorldLinux_Data/Managed/Assembly-CSharp.dll</HintPath>
       <Private>false</Private>
@@ -24,6 +28,11 @@
       <HintPath>/tank/home/kjellner/.steam/steam/steamapps/common/RimWorld/RimWorldLinux_Data/Managed/UnityEngine.dll</HintPath>
       <Private>false</Private>
     </Reference>
+
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>/tank/home/kjellner/.steam/steam/steamapps/common/RimWorld/RimWorldLinux_Data/Managed/UnityEngine.CoreModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
   </ItemGroup>
 
   <ItemGroup>
@@ -31,5 +40,18 @@
       <ExcludeAssets>runtime</ExcludeAssets>
     </PackageReference>
   </ItemGroup>
+
+  <PropertyGroup>
+    <ExportDir>$(MSBuildProjectDirectory)/export/KjellnersPersistentMaps/1.6/Assemblies</ExportDir>
+    <SteamModDir>/tank/home/kjellner/.local/share/Steam/steamapps/common/RimWorld/Mods/KjellnersPersistentMaps/1.6/Assemblies</SteamModDir>
+  </PropertyGroup>
+
+  <Target Name="DeployMod" AfterTargets="Build">
+    <Copy SourceFiles="$(OutputPath)$(AssemblyName).dll" DestinationFolder="$(ExportDir)" />
+    <Copy SourceFiles="$(OutputPath)$(AssemblyName).pdb" DestinationFolder="$(ExportDir)" />
+    <Copy SourceFiles="$(OutputPath)$(AssemblyName).dll" DestinationFolder="$(SteamModDir)" />
+    <Copy SourceFiles="$(OutputPath)$(AssemblyName).pdb" DestinationFolder="$(SteamModDir)" />
+    <Message Text="Deployed to export and Steam mod directory." Importance="high" />
+  </Target>
 
 </Project>

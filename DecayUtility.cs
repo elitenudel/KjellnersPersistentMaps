@@ -24,109 +24,87 @@ namespace KjellnersPersistentMaps
 
     public static class DecayUtility
     {
-        public static OfflineDecayResult ApplyOfflineDecay(
-            OfflineDecayContext context,
-            PersistentItemData itemData)
+        public static void ApplyDecay(Thing thing, OfflineDecayContext context)
         {
-            OfflineDecayResult result = new OfflineDecayResult
-            {
-                shouldSpawn = true,
-                resultingHp = itemData.hitPoints,
-                resultingRotProgress = 0f
-            };
+            if (thing.Destroyed)
+                return;
 
-            ThingDef def = DefDatabase<ThingDef>
-                .GetNamedSilentFail(itemData.defName);
-
-            if (def == null)
+            // -------------------------------------------------
+            // ROT
+            // -------------------------------------------------
+            var rotComp = thing.TryGetComp<CompRottable>();
+            if (rotComp != null)
             {
-                result.shouldSpawn = false;
-                return result;
+                float rot = rotComp.RotProgress;
+
+                int startTick = context.startTick;
+                int endTick = startTick + context.ticksPassed;
+
+                const int hourStep = 2500;
+
+                var rotProps = rotComp.PropsRot;
+
+                for (int tick = startTick; tick < endTick; tick += hourStep)
+                {
+                    int remaining = endTick - tick;
+                    int step = remaining < hourStep ? remaining : hourStep;
+
+                    float temp =
+                        GenTemperature.GetTemperatureFromSeasonAtTile(
+                            tick,
+                            context.tileId);
+
+                    temp += GenTemperature.OffsetFromSunCycle(
+                        tick,
+                        context.tileId);
+
+                    float rotRate = GenTemperature.RotRateAtTemperature(temp);
+
+                    rot += rotRate * step;
+
+                    if (rot >= rotProps.TicksToRotStart)
+                    {
+                        thing.Destroy(DestroyMode.Vanish);
+                        return;
+                    }
+                }
+
+                rotComp.RotProgress = rot;
             }
 
-            bool roofed = context.map.roofGrid.Roofed(itemData.position);
-
-            // FOOD ROT 
-            if (IsRottingFood(def))
+            // -------------------------------------------------
+            // OUTDOOR DETERIORATION
+            // -------------------------------------------------
+            if (!thing.Destroyed && !context.map.roofGrid.Roofed(thing.Position))
             {
-                var rotProps = def.GetCompProperties<CompProperties_Rottable>();
+                float intervals = context.ticksPassed / 250f;
 
-                float rotProgress =
-                    CalculateOfflineRot(def, itemData, context);
+                // Clamp 0..1
+                float normalizedRain =
+                    Math.Max(0f, Math.Min(1f, context.rainfall / 4000f));
 
-                result.resultingRotProgress = rotProgress;
+                // Lerp 0.5 → 2.0 manually
+                float rainFactor =
+                    0.5f + (2f - 0.5f) * normalizedRain;
 
-                if (rotProgress >= rotProps.TicksToRotStart)
+                float expectedDamage =
+                    intervals * 0.015f * rainFactor;
+
+                int damage = (int)Math.Round(expectedDamage);
+
+                if (damage > 0)
                 {
-                    result.shouldSpawn = false;
-                    return result;
+                    thing.TakeDamage(
+                        new DamageInfo(DamageDefOf.Deterioration, damage)
+                    );
                 }
             }
-
-            // OUTDOOR DAMAGE 
-            if (!roofed)
-            {
-                int hpLoss = CalculateOutdoorDeterioration(context);
-                result.resultingHp -= hpLoss;
-            }
-
-            if (result.resultingHp <= 0)
-            {
-                result.shouldSpawn = false;
-            }
-
-            return result;
         }
 
         private static bool IsRottingFood(ThingDef def)
         {
             return def.IsIngestible &&
                    def.GetCompProperties<CompProperties_Rottable>() != null;
-        }
-
-        private static float CalculateOfflineRot(
-            ThingDef def,
-            PersistentItemData itemData,
-            OfflineDecayContext context)
-        {
-            var rotProps = def.GetCompProperties<CompProperties_Rottable>();
-            if (rotProps == null)
-                return itemData.rotProgress;
-
-            float rot = itemData.rotProgress;
-
-            int startTick = context.startTick;
-            int endTick = startTick + context.ticksPassed;
-
-            const int hourStep = 2500; // 1 in-game hour
-
-            for (int tick = startTick; tick < endTick; tick += hourStep)
-            {
-                int remaining = endTick - tick;
-                int step = remaining < hourStep ? remaining : hourStep;
-
-                // Seasonal temperature
-                float temp =
-                    GenTemperature.GetTemperatureFromSeasonAtTile(
-                        tick,
-                        context.tileId);
-
-                // Add day/night swing
-                temp += GenTemperature.OffsetFromSunCycle(
-                    tick,
-                    context.tileId);
-
-                float rotRate = GenTemperature.RotRateAtTemperature(temp);
-
-                // Vanilla 1.6 rot math
-                rot += rotRate * step;
-
-                // Early exit if fully rotten
-                if (rot >= rotProps.TicksToRotStart)
-                    return rot;
-            }
-
-            return rot;
         }
 
         private static int CalculateOutdoorDeterioration(
