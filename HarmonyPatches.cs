@@ -152,14 +152,18 @@ namespace KjellnersPersistentMaps
         }
     }
 
-    // Skip mapgen animal population for tiles that have persistent data.
-    // Our wildlife is deep-saved directly to tile XML and respawned on restore.
-    // WildAnimalSpawner handles natural regrowth going forward.
-    [HarmonyPatch(typeof(GenStep_Animals), "Generate")]
-    public static class Patch_GenStep_Animals
+    // Block ALL map content generation for tiles that have persistent data.
+    // GenerateContentsIntoMap is the single method that iterates and calls every
+    // GenStep. Returning false here prevents animals, ruins, settlement buildings,
+    // scatter items, and everything else from being placed — our XML restore takes
+    // over the entire content layer. The map's infrastructure (grids, regions, etc.)
+    // is initialised before this call and is unaffected.
+    // Note: map.Parent is null for pocket/encounter maps — those are always allowed.
+    [HarmonyPatch(typeof(MapGenerator), nameof(MapGenerator.GenerateContentsIntoMap))]
+    public static class Patch_MapGenerator_GenerateContentsIntoMap
     {
         public static bool Prefix(Map map) =>
-            !PersistentMapSerializer.PersistentFileExists(map.Tile);
+            map?.Parent == null || !PersistentMapSerializer.PersistentFileExists(map.Tile);
     }
 
     // Suppress roof collapse checks while restoring a map
@@ -175,4 +179,5 @@ namespace KjellnersPersistentMaps
     {
         public static bool Prefix() => !PersistentMapSerializer.IsRestoring;
     }
+
 }

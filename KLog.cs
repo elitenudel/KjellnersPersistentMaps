@@ -17,17 +17,17 @@ namespace KjellnersPersistentMaps
         public static void Message(string msg)
         {
             if (Prefs.DevMode)
-                Log.Message("[PersistentMaps] " + msg);
+                Log.Message(msg);
         }
 
         public static void Warning(string msg)
         {
-            Log.Warning("[PersistentMaps] " + msg);
+            Log.Warning(msg);
         }
 
         public static void Error(string msg)
         {
-            Log.Error("[PersistentMaps] " + msg);
+            Log.Error(msg);
         }
     }
 }

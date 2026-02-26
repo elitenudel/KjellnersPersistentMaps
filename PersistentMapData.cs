@@ -44,57 +44,42 @@ namespace KjellnersPersistentMaps
             if (t is Pawn p)
             {
                 if (p.RaceProps.Humanlike) return false; // transient NPCs; colonists leave with caravan
-                // Non-humanlike world pawns (e.g. ancient danger Megascarab bodyguards freed
-                // from caskets) stay tracked in WorldPawns even while spawned on the map.
-                // GenStep_AncientDanger re-creates them on every mapgen, so saving them here
-                // causes ID collisions and duplicate pawns on restore.
+                // Non-humanlike world pawns (Megascarab bodyguards etc.) stay in WorldPawns
+                // even while spawned; deep-saving them would cause an ID collision on restore.
                 if (Find.WorldPawns.GetSituation(p) != WorldPawnSituation.None) return false;
             }
-            if (t is Corpse) return false;     // corpse inner-pawn has unresolvable cross-refs in isolation
+            // Corpses are saved (all types: player, enemy, mech, animal, in grave or standalone).
+            // Inner-pawn cross-refs resolve via RefInjector. Any WorldPawns ID collision for
+            // the inner pawn is cleaned up by RemoveWorldPawnGhosts before loading.
             if (t is Building_Casket casket)
             {
-                // Ancient danger casket inner pawns are world pawns: they live in
-                // WorldPawns.AllPawnsAlive AND inside their casket simultaneously.
-                // GenStep_AncientDanger re-populates caskets from WorldPawns on every map
-                // generation, so we must NOT deep-save them — doing so creates a duplicate
-                // ID registration at restore time (RefInjector registers them from WorldLevel;
-                // our XML would then try to register new Pawn objects with the same IDs).
-                //
-                // Skip any casket whose inner pawn is already tracked as a live world pawn.
-                // Empty caskets and caskets with non-world-pawn inner pawns (player cryo
-                // colonists) fall through and are included in savedThings.
+                // ExtractCryoColonists and ExtractCasketNonPlayerPawns run before this
+                // filter, so caskets should be empty by the time we reach here.
+                // Safety net: skip any casket still holding a world-pawn occupant;
+                // deep-saving a world-pawn would cause an ID collision on restore.
                 ThingOwner held = casket.GetDirectlyHeldThings();
                 for (int i = 0; i < held.Count; i++)
                 {
-                    if (held[i] is Pawn ip &&
-                        Find.WorldPawns.GetSituation(ip) != WorldPawnSituation.None)
-                        return false;
+                    if (held[i] is Pawn ip)
+                    {
+                        if (Find.WorldPawns.GetSituation(ip) != WorldPawnSituation.None) return false;
+                    }
                 }
             }
-            if (t.def.IsBlueprint || t.def.IsFrame) return false;
+            if (t.def.IsBlueprint) return false;
             if (t.def.category == ThingCategory.Mote) return false;
             if (t.def.category == ThingCategory.Ethereal) return false;
             if (t is Skyfaller) return false;
             if (t is Projectile) return false;
-            if (t is Filth) return false;
+            // listerThings.AllThings only contains spawned things, so this should always be true.
+            // Defensive guard in case ShouldPersistThing is ever called from a non-listerThings source.
             if (!t.Spawned) return false;
-            if (!t.def.destroyable) return false;
+            // Monolith excluded: should regenerate naturally on new tiles rather than being
+            // frozen in our save. All other non-destroyable things (geysers etc.) ARE saved.
+            if (t.def.defName == "VoidMonolith") return false;
 
             return true;
         }
 
-        // Returns true for spawned pawns that should be moved to WorldPawns
-        // on map abandonment rather than serialized to our XML.
-        // Currently covers wildlife; humanlike non-player pawns (visitors,
-        // raiders) are transient and intentionally excluded.
-        // Player colonists in cryptosleep caskets: TODO — future pass.
-        public static bool ShouldMoveToWorldPawns(Pawn p)
-        {
-            if (p == null || p.Destroyed) return false;
-            if (!p.Spawned) return false;
-            if (p.Faction == Faction.OfPlayer) return false; // leave with caravan
-            if (p.RaceProps.Humanlike) return false;          // transient NPCs
-            return true;                                       // wildlife
-        }
     }
 }

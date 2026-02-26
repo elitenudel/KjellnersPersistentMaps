@@ -1,0 +1,58 @@
+This document is for Claude Code to reference against.
+
+When a settlement is abandoned and restored:
+--- Pawns ---
+Player pawns are:
+if in casket: saved and added to world component to avoid GC and reference lookup issues. Alive or dead. Faction kept
+if dead in grave/sarcophagus: corpse is kept. Added to world component to avoid GC and reference lookup issues. Faction kept
+if dead outside: corpse is kept. Added to world component to avoid GC and reference lookup issues. 
+if alive outside: returned to world pawns as important
+
+Slave pawns are:
+if in casket: saved and added to world component to avoid GC and reference lookup issues. Alive or dead. Faction kept
+if dead in grave/sarcophagus: corpse is kept. Added to world component to avoid GC and reference lookup issues. Faction kept
+if dead outside: corpse is kept. Added to world component to avoid GC and reference lookup issues.
+if alive outside: returned to world pawns as important
+
+Prisoner pawns are:
+if in casket: saved and added to world component to avoid GC and reference lookup issues. Alive or dead. Faction kept
+if alive outside: returned to world pawns
+
+Friendly pawns are (traders and allies):
+if in casket: saved and added to world component to avoid GC and reference lookup issues. Alive or dead. Faction kept
+if dead outside: corpse is kept. Added to world component to avoid GC and reference lookup issues.
+if alive outside: returned to world pawns
+
+Enemy pawns are:
+if in casket: saved and added to world component to avoid GC. Alive or dead. Faction kept
+if dead in grave/sarcophagus: corpse is kept. Added to world component to avoid GC and reference lookup issues. Faction kept
+if dead outside: corpse is kept. Added to world component to avoid GC and reference lookup issues.
+if alive outside: returned to world pawns
+
+Mech pawns are:
+if player mech: saved to world component to avoid GC and reference lookup issues.
+if part of ancient danger: deep saved to XML.
+if part of mech cluster: deep saved to XML.
+if dead: deep saved to XML.
+
+Animal pawns are:
+if in casket: saved and added to world component to avoid GC and reference lookup issues. Alive or dead. Faction kept
+if dead in grave/sarcophagus: corpse is kept. Added to world component to avoid GC. Faction kept
+if dead outside: corpse is kept. Added to world component to avoid GC and reference lookup issues.
+if alive outside and faction is player: saved and added to world component to avoid GC. Alive or dead. Faction kept
+if alive outside and part of friendly or enemy faction: returned to world pawns
+if alive outside and part of natural faction: deep saved
+
+
+--- To be saved ---
+All buildings and scaffolding is saved - except:
+- blueprints
+- Monolith (should be destroyed in a way that regenerates it on new maps where the players visit)
+
+All terrain is saved
+All things are saved
+
+--- Mapgen on resettlement ---
+all mapgen is blocked and we rely on the XML saved on disk, world component and current game state
+
+--- Decay, deterioration and rot ---

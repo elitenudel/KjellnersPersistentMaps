@@ -30,22 +30,14 @@ namespace KjellnersPersistentMaps
             if (dir == null)
                 return;
 
-            _currentSource = "GameLevel";
             RegisterGameLevel(dir);
-            _currentSource = "WorldLevel";
             RegisterWorldLevel(dir);
-            _currentSource = "MapLevel";
             RegisterMapLevel(dir);
         }
-
-        // DEBUG: tracks which source registered each human pawn (cleared per PreRegisterActiveGame call)
-        private static string _currentSource = "?";
 
         private static void TryRegister(ILoadReferenceable reffable, LoadedObjectDirectory dir)
         {
             if (reffable == null) return;
-            if (reffable is Pawn p && p.RaceProps?.Humanlike == true)
-                KLog.Message($"[PersistentMaps][RefInjector] Registering human pawn {p.Name?.ToStringFull ?? "?"} id={p.GetUniqueLoadID()} source={_currentSource}");
             dir.RegisterLoaded(reffable);
         }
 

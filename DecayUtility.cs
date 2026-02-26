@@ -13,7 +13,7 @@ namespace KjellnersPersistentMaps
         public int ticksPassed;
         public int tileId;
         public float rainfall;
-        public bool hasFreezeTawCycles; // computed once by BuildDecayContext, shared by all decay passes
+        public bool hasFreezeThawCycles; // computed once by BuildDecayContext, shared by all decay passes
     }
 
     public static class DecayUtility
@@ -94,7 +94,7 @@ namespace KjellnersPersistentMaps
             float rainFactor = roofed ? 1.0f : 0.5f + 1.5f * normalizedRain;
 
             // Freeze-thaw cycles crack masonry and loosen foundations
-            float freezeFactor = context.hasFreezeTawCycles ? 1.4f : 1.0f;
+            float freezeFactor = context.hasFreezeThawCycles ? 1.4f : 1.0f;
 
             float damagePercent = yearsPassed * materialFactor * exposureFactor * rainFactor * freezeFactor;
             int damage = (int)Math.Round(building.MaxHitPoints * damagePercent);
@@ -135,7 +135,7 @@ namespace KjellnersPersistentMaps
 
             float normalizedRain = Math.Max(0f, Math.Min(1f, context.rainfall / 4000f));
             float rainMod   = 0.5f + 1.5f * normalizedRain;
-            float freezeMod = context.hasFreezeTawCycles ? 1.5f : 1.0f;
+            float freezeMod = context.hasFreezeThawCycles ? 1.5f : 1.0f;
 
             // Base chance per unroofed constructed-floor cell per year to revert to natural terrain.
             // 6% × modifiers means high-rain freeze-thaw tiles lose ~20-25% of exposed floors/yr.
@@ -194,7 +194,7 @@ namespace KjellnersPersistentMaps
             float rainMod = 0.4f + 0.6f * (1f - normalizedRain); // 1.0 dry → 0.4 very wet
 
             // Freeze-thaw shortens time between failures
-            float freezeMod = context.hasFreezeTawCycles ? 0.65f : 1.0f;
+            float freezeMod = context.hasFreezeThawCycles ? 0.65f : 1.0f;
 
             // Mostly unroofed → more exposure → more frequent events
             int roofedCount = candidates.Count(b => context.map.roofGrid.Roofed(b.Position));
@@ -284,7 +284,7 @@ namespace KjellnersPersistentMaps
 
         // Samples the tile's temperature at monthly intervals to detect freeze-thaw cycles
         // (temperature crossing 0°C). Computed once and cached in OfflineDecayContext.
-        public static bool ComputeFreezeTawCycles(OfflineDecayContext context)
+        public static bool ComputeFreezeThawCycles(OfflineDecayContext context)
         {
             const int samples      = 12;
             const int ticksPerYear = 60000 * 60;
